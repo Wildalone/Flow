@@ -12,11 +12,11 @@ When the host describes a lockout situation:
 2. Check the property's lock status.
 3. Resolve access: try a remote lock reset if the lock is online; if it's offline or there's no smart lock, dispatch the backup key holder instead.
 Two closing steps are mandatory and non-negotiable, in this order, no matter how the lockout was resolved (even if it's still escalated/unresolved):
-4. Log the incident (log_incident) — always, exactly once.
-5. Draft and send a short, warm message to the guest (send_guest_message) — always, exactly once, confirming the resolution or explaining what happens next if it's still unresolved.
+4. Log the incident (log_incident) , always, exactly once.
+5. Draft and send a short, warm message to the guest (send_guest_message) , always, exactly once, confirming the resolution or explaining what happens next if it's still unresolved.
 
 Handle messy edges honestly instead of guessing:
-- If a booking lookup doesn't find a single match, do NOT retry with a reworded or more detailed address — the data won't change. Immediately stop and ask the host to confirm the exact address instead.
+- If a booking lookup doesn't find a single match, do NOT retry with a reworded or more detailed address , the data won't change. Immediately stop and ask the host to confirm the exact address instead.
 - If dispatching the backup key holder gets no response, do not claim the lockout is resolved. Still complete steps 4 and 5 above, logging it as escalated and telling the guest and host that the host will call the contact directly.
 - Narrate what you're doing in one short line before each step, then act. Keep replies concise.
 """
@@ -121,7 +121,7 @@ def run_turn(messages: list) -> dict:
         except RateLimitError as e:
             raise RuntimeError(
                 "Hit Groq's rate limit (likely the free-tier daily token cap). "
-                "Wait a bit and try again — see console.groq.com/settings/billing for details."
+                "Wait a bit and try again , see console.groq.com/settings/billing for details."
             ) from e
         except BadRequestError as e:
             if "tool_use_failed" not in str(e):
@@ -133,7 +133,7 @@ def run_turn(messages: list) -> dict:
                     "role": "system",
                     "content": (
                         "Your previous turn used malformed function-call syntax. Call at most "
-                        "one tool per turn using the tool-calling mechanism only — never write "
+                        "one tool per turn using the tool-calling mechanism only , never write "
                         "a function call as plain text."
                     ),
                 }
@@ -174,7 +174,7 @@ def run_turn(messages: list) -> dict:
                         "content": (
                             "You haven't actually called "
                             + ", ".join(sorted(missing))
-                            + " yet — those are mandatory. Call them now before replying with plain text."
+                            + " yet , those are mandatory. Call them now before replying with plain text."
                         ),
                     }
                 )
@@ -189,7 +189,7 @@ def run_turn(messages: list) -> dict:
             args = json.loads(tc.function.arguments or "{}")
             if action.kind == WRITE:
                 if tc.function.name in ONCE_ONLY_ACTIONS and tc.function.name in completed_once_only:
-                    # Already done earlier in this conversation — don't ask the host
+                    # Already done earlier in this conversation , don't ask the host
                     # to confirm (or worse, log) a contradictory repeat.
                     tool_results.append(
                         {
@@ -245,7 +245,7 @@ def run_turn(messages: list) -> dict:
 
     return {
         "type": "text",
-        "text": "I've hit my step limit for this turn — let me know how you'd like to continue.",
+        "text": "I've hit my step limit for this turn , let me know how you'd like to continue.",
         "messages": messages,
     }
 

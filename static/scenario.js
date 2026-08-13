@@ -8,7 +8,7 @@ const TREE = {
   },
   agent_lookup: {
     speaker: "agent",
-    text: "Let me pull up your booking... Found it — you're checked in at The Oak St Cottage through the 16th. Checking the smart lock now.",
+    text: "Let me pull up your booking... Found it , you're checked in at The Oak St Cottage through the 16th. Checking the smart lock now.",
     choices: [{ label: "Continue →", next: "agent_branch" }],
   },
   agent_branch: {
@@ -16,8 +16,8 @@ const TREE = {
     text: "Here's what I find when I check the property:",
     choicesLabel: "What does the agent find?",
     choices: [
-      { label: "✅ Lock is online — reset it remotely", next: "agent_online" },
-      { label: "⚠️ Lock is offline — can't reset remotely", next: "agent_offline" },
+      { label: "✅ Lock is online , reset it remotely", next: "agent_online" },
+      { label: "⚠️ Lock is offline , can't reset remotely", next: "agent_offline" },
       { label: "⚠️ No smart lock on file for this property", next: "agent_nolock" },
       { label: "❌ Address doesn't match any booking on file", next: "agent_clarify" },
     ],
@@ -26,7 +26,7 @@ const TREE = {
   // Branch 1: online lock, quick resolve
   agent_online: {
     speaker: "agent",
-    text: "Lock is online — resetting it remotely right now.",
+    text: "Lock is online , resetting it remotely right now.",
     choices: [{ label: "Continue →", next: "guest_online_thanks" }],
   },
   guest_online_thanks: {
@@ -43,7 +43,7 @@ const TREE = {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "resolved_remote_reset",
-      summary: "Guest locked out at 42 Oak St. Smart lock was online — reset remotely, resolved immediately.",
+      summary: "Guest locked out at 42 Oak St. Smart lock was online , reset remotely, resolved immediately.",
     },
     choices: [],
   },
@@ -51,12 +51,12 @@ const TREE = {
   // Branch 2/3: offline or no lock -> dispatch backup key
   agent_offline: {
     speaker: "agent",
-    text: "Lock is offline — I can't reset it remotely. Dispatching your backup-key holder now.",
+    text: "Lock is offline , I can't reset it remotely. Dispatching your backup-key holder now.",
     choices: [{ label: "Continue →", next: "guest_waiting_key" }],
   },
   agent_nolock: {
     speaker: "agent",
-    text: "This property doesn't have a smart lock on file — dispatching your backup-key holder now.",
+    text: "This property doesn't have a smart lock on file , dispatching your backup-key holder now.",
     choices: [{ label: "Continue →", next: "guest_waiting_key" }],
   },
   guest_waiting_key: {
@@ -64,13 +64,13 @@ const TREE = {
     text: "Okay... how long will that take? I'm getting cold out here.",
     choicesLabel: "Does the key holder respond?",
     choices: [
-      { label: "✅ Key holder confirms — 10 minutes out", next: "guest_key_coming" },
+      { label: "✅ Key holder confirms , 10 minutes out", next: "guest_key_coming" },
       { label: "⚠️ No response from the key holder", next: "agent_escalate" },
     ],
   },
   guest_key_coming: {
     speaker: "guest",
-    text: "Okay, thank you — I'll wait by the door.",
+    text: "Okay, thank you , I'll wait by the door.",
     choices: [{ label: "Continue →", next: "end_resolved_key" }],
   },
   end_resolved_key: {
@@ -82,7 +82,7 @@ const TREE = {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "resolved_backup_key",
-      summary: "Guest locked out at 42 Oak St. No remote reset available — backup key holder dispatched and responded, guest let in.",
+      summary: "Guest locked out at 42 Oak St. No remote reset available , backup key holder dispatched and responded, guest let in.",
     },
     choices: [],
   },
@@ -90,7 +90,7 @@ const TREE = {
   // Escalation
   agent_escalate: {
     speaker: "agent",
-    text: "I'm not able to reach the backup-key holder. I won't leave you waiting on a false promise — I'm asking the host to call them directly right now.",
+    text: "I'm not able to reach the backup-key holder. I won't leave you waiting on a false promise , I'm asking the host to call them directly right now.",
     choices: [{ label: "Continue →", next: "guest_escalate_reply" }],
   },
   guest_escalate_reply: {
@@ -102,12 +102,12 @@ const TREE = {
     speaker: "agent",
     text: "Logging this as an escalated incident so the host follows up personally, and sending you an honest status update instead of a false all-clear.",
     end: "escalated",
-    endLabel: "Escalated — host notified to call directly",
+    endLabel: "Escalated , host notified to call directly",
     logIncident: {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "escalated_no_response",
-      summary: "Guest locked out at 42 Oak St. Backup key holder unreachable — escalated to host for a direct call instead of claiming it was resolved.",
+      summary: "Guest locked out at 42 Oak St. Backup key holder unreachable , escalated to host for a direct call instead of claiming it was resolved.",
     },
     choices: [],
   },
@@ -124,7 +124,7 @@ const TREE = {
   },
   guest_corrects: {
     speaker: "guest",
-    text: "Oh sorry — it's actually 42 Oak St, I misread my confirmation email!",
+    text: "Oh sorry , it's actually 42 Oak St, I misread my confirmation email!",
     choices: [{ label: "Continue →", next: "agent_lookup" }],
   },
   guest_unsure: {
@@ -134,7 +134,7 @@ const TREE = {
   },
   end_needs_followup: {
     speaker: "agent",
-    text: "I can't act without confirming which property this is — flagging this for the host to follow up personally rather than guessing.",
+    text: "I can't act without confirming which property this is , flagging this for the host to follow up personally rather than guessing.",
     end: "followup",
     endLabel: "Needs host follow-up",
     logIncident: {
@@ -211,7 +211,7 @@ async function logIncident(payload) {
       body: JSON.stringify(payload),
     });
   } catch (err) {
-    // Non-fatal for the walkthrough — the UI already shows the outcome either way.
+    // Non-fatal for the walkthrough , the UI already shows the outcome either way.
   }
 }
 
