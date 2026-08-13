@@ -2,42 +2,48 @@
 
 A host-facing assistant that closes the loop on one real short-term-rental operator headache: **a guest gets locked out mid-stay.**
 
-Tell it what's happening in plain language, and it looks up the booking, resolves access (remote lock reset or dispatching a backup key), logs the incident, and drafts the guest follow-up — asking for your confirmation before anything that actually acts in the real world (resetting a lock, contacting the key holder, messaging the guest).
+The guided walkthrough at `/` steps through the flow one decision at a time: a guest message comes in, you pick how the agent responds, that reveals the guest's reply as the next set of options, and so on — branching through the happy path and every messy edge (offline lock, no smart lock on file, an unresponsive key holder, an address that doesn't match any booking) until the incident is logged and the guest is messaged. Every ending is real: reaching it writes an actual entry to the incident log.
 
-Built with Groq (Llama 3.3 70B, OpenAI-compatible tool calling) + FastAPI, with a small mock dataset standing in for a real property-management system.
+There's also an AI chat prototype at `/chat` — free-form text, driven live by a Groq/Llama tool-calling agent that decides which actions to take and asks for confirmation before anything with a real-world effect. It's the earlier, more ambitious version of this project; see the journey doc for why the guided walkthrough became the primary demo instead (short version: a live third-party model call is the wrong thing to depend on mid-recording).
+
+Built with FastAPI. The guided walkthrough is a deterministic decision tree (no LLM calls, so it can't fail mid-demo); the chat prototype uses Groq (Llama 3.1 8B, OpenAI-compatible tool calling). Both share the same action registry and mock property/booking data standing in for a real property-management system.
 
 ## Setup
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env   # then add your GROQ_API_KEY
+cp .env.example .env   # only needed for the /chat AI prototype — add your GROQ_API_KEY
 uvicorn app.main:app --reload
 ```
 
-Open http://localhost:8000
+Open http://localhost:8000 for the guided walkthrough (no API key required).
 
-## Demo script (the messy edges)
+## Demo script
 
-The mock data has three properties, each set up to trigger a different path:
+Start at `http://localhost:8000`. Click through at a natural pace:
 
-| Type in the chat | Property | What happens |
-|---|---|---|
-| `Guest at 42 Oak St is locked out` | Oak St Cottage — smart lock, online | Remote reset resolves it immediately |
-| `Guest at 118 Maple Ave can't get in` | Maple Loft — smart lock, offline | Reset fails, falls back to dispatching the backup key holder (who responds) |
-| `Locked out at 7 Birch Court` | Birch Court Bungalow — no smart lock | Goes straight to the backup key holder — who does **not** respond, so the incident is logged as escalated and you're told to call them directly |
-| `Guest locked out at 99 Nowhere Ln` | no match | No booking found — the assistant asks you to confirm the address instead of guessing |
+1. **Guest message** — "locked out at 42 Oak St" — click **Continue** through the booking lookup.
+2. **Branch point** — pick one of four options to show a different path:
+   - **Lock is online** → remote reset → guest thanks you → resolved.
+   - **Lock is offline** → backup key dispatched → key holder responds → resolved.
+   - **No smart lock on file** → backup key dispatched → key holder does **not** respond → escalated, host told to call directly instead of a false all-clear.
+   - **Address doesn't match a booking** → the agent asks for the correct address instead of guessing (try both a correction, which loops back into the flow, and staying unsure, which flags it for the host).
+3. After any ending, use **Try another path** to jump straight to a different branch without retyping anything, or **Start over** for the full flow from the top.
 
-Every write action (lock reset, key dispatch, incident log, guest message) shows up as a confirm/cancel card before it runs. Click **Reset demo** between runs to clear the conversation.
+Every ending shows a Resolved / Escalated / Needs-follow-up badge and confirms the incident was logged — check `data/incidents.json` afterward to see the real entries.
 
 ## Project layout
 
 ```
 app/
-  main.py          FastAPI app: serves the UI, /api/chat, /api/confirm, /api/reset
-  agent.py         Groq tool-use loop (READ actions auto-run, WRITE actions wait for confirmation)
+  main.py          FastAPI app: serves both UIs, /api/log-incident (deterministic),
+                   and /api/chat, /api/confirm, /api/reset (AI prototype)
+  agent.py         Groq tool-use loop for the /chat prototype (READ actions auto-run,
+                   WRITE actions wait for confirmation)
   store.py         Loads/saves the mock JSON data
   actions/         One module per tool: booking lookup, lock status/reset, backup key dispatch,
                    incident logging, guest messaging — each registered via a small Action registry
 data/              Mock properties, bookings, and the incident log the app writes to
-static/            Chat UI (vanilla HTML/CSS/JS, no build step)
+static/            index.html + scenario.js — the guided walkthrough (primary)
+                   chat.html + app.js — the AI chat prototype
 ```

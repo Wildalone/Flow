@@ -3,26 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lockout Flow — Host Assistant</title>
+  <title>Lockout Flow — Guided Walkthrough</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <div class="app">
     <header>
       <h1>Lockout Flow</h1>
-      <p class="subtitle">Tell me a guest is locked out and I'll take it from there.</p>
-      <button id="resetBtn" class="reset-btn" type="button">Reset demo</button>
+      <p class="subtitle">A guest is locked out mid-stay. Walk the flow through to see how it closes the loop — including the messy edges. <a href="/chat">AI chat prototype →</a></p>
+      <button id="restartTop" class="reset-btn" type="button">Start over</button>
     </header>
 
     <main id="log" class="log"></main>
-
-    <form id="composer" class="composer">
-      <input id="messageInput" type="text" autocomplete="off"
-             placeholder="e.g. Guest at 42 Oak St says they're locked out" />
-      <button type="submit">Send</button>
-    </form>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/scenario.js"></script>
 </body>
 </html>

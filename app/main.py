@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import agent
+from .actions import get_action
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,9 +29,32 @@ class ConfirmRequest(BaseModel):
     approved: bool
 
 
+class LogIncidentRequest(BaseModel):
+    summary: str
+    resolution: str
+    property_id: str | None = None
+    booking_id: str | None = None
+
+
 @app.get("/")
 def index():
     return FileResponse(BASE_DIR / "static" / "index.html")
+
+
+@app.get("/chat")
+def chat_page():
+    return FileResponse(BASE_DIR / "static" / "chat.html")
+
+
+@app.post("/api/log-incident")
+def log_incident_endpoint(req: LogIncidentRequest):
+    result = get_action("log_incident").handler(
+        summary=req.summary,
+        resolution=req.resolution,
+        property_id=req.property_id,
+        booking_id=req.booking_id,
+    )
+    return result
 
 
 @app.get("/api/health")
