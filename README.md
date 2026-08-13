@@ -32,6 +32,8 @@ Start at `http://localhost:8000`. Click through at a natural pace:
 
 Every ending shows a Resolved / Escalated / Needs-follow-up badge and confirms the incident was logged — check `data/incidents.json` afterward to see the real entries.
 
+At `/chat`, pick a scenario, chat back and forth as the host, then click **Wrap up & log incident** whenever you're ready to conclude — it logs a real incident (resolution matched to that scenario's ground truth) and shows the same Resolved/Escalated badge as the walkthrough.
+
 ## Project layout
 
 ```

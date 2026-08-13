@@ -100,6 +100,22 @@ def persona_reply(req: PersonaReplyRequest):
     return {"reply": reply}
 
 
+@app.post("/api/persona/end")
+def persona_end():
+    if PERSONA_SESSION["property_id"] is None:
+        return JSONResponse({"error": "No active scenario."}, status_code=400)
+    state = persona.end_state(PERSONA_SESSION["property_id"])
+    get_action("log_incident").handler(
+        summary=state["summary"],
+        resolution=state["resolution"],
+        property_id=state["property_id"],
+        booking_id=state["booking_id"],
+    )
+    PERSONA_SESSION["property_id"] = None
+    PERSONA_SESSION["history"] = []
+    return {"end_class": state["end_class"], "end_label": state["end_label"]}
+
+
 @app.post("/api/persona/reset")
 def persona_reset():
     PERSONA_SESSION["property_id"] = None

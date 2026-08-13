@@ -9,6 +9,7 @@ SCENARIOS = {
         "guest_name": "Priya Nandakumar",
         "address": "42 Oak St",
         "nickname": "The Oak St Cottage",
+        "booking_id": "bk_1001",
         "reset_instruction": (
             "If the host says they've remotely reset the lock: it DID genuinely work — the door is now "
             "unlocked. Say so, be relieved, and thank them. Do not claim it's still locked."
@@ -17,11 +18,16 @@ SCENARIOS = {
             "The backup key holder (Sam, the cleaner) responds quickly and shows up if contacted."
         ),
         "opening": "Hi, I'm locked out of my rental at 42 Oak St! I've been standing outside for a few minutes now, can you help?",
+        "end_class": "resolved",
+        "end_label": "Resolved",
+        "resolution": "resolved_remote_reset",
+        "end_summary": "Guest {guest_name} was locked out at {address}. Smart lock was online — host resolved it with a remote reset.",
     },
     "prop_b": {
         "guest_name": "Marcus Webb",
         "address": "118 Maple Ave",
         "nickname": "Maple Loft",
+        "booking_id": "bk_1002",
         "reset_instruction": (
             "The lock is actually offline. If the host says they've remotely reset it, that CANNOT have "
             "worked — the door is still locked no matter what they claim. Politely say it's still not "
@@ -31,11 +37,16 @@ SCENARIOS = {
             "The backup key holder (Jordan, a neighbor) responds and shows up if contacted."
         ),
         "opening": "Hey, I can't get into my rental at 118 Maple Ave, the door won't budge. Please help!",
+        "end_class": "resolved",
+        "end_label": "Resolved",
+        "resolution": "resolved_backup_key",
+        "end_summary": "Guest {guest_name} was locked out at {address}. Lock was offline — backup key holder dispatched and responded, guest let in.",
     },
     "prop_c": {
         "guest_name": "Elena Torres",
         "address": "7 Birch Court",
         "nickname": "Birch Court Bungalow",
+        "booking_id": "bk_1003",
         "reset_instruction": (
             "There is no smart lock on this property at all. If the host mentions resetting a lock "
             "remotely, point out there's no smart lock here to reset."
@@ -45,6 +56,10 @@ SCENARIOS = {
             "you wait or how many times the host says they've reached out."
         ),
         "opening": "Hi, I'm locked out at 7 Birch Court and it's getting late. Can someone help me get in?",
+        "end_class": "escalated",
+        "end_label": "Escalated — host notified to call directly",
+        "resolution": "escalated_no_response",
+        "end_summary": "Guest {guest_name} was locked out at {address}. No smart lock on file and backup key holder didn't respond — escalated for the host to call directly.",
     },
 }
 
@@ -73,6 +88,18 @@ def _system_prompt(scenario: dict) -> str:
         "(1-3 sentences), with no markdown and no function-call syntax of any kind — plain conversational "
         "text only. Never break character or mention that you are an AI, a model, or a simulation."
     )
+
+
+def end_state(property_id: str) -> dict:
+    scenario = SCENARIOS[property_id]
+    return {
+        "end_class": scenario["end_class"],
+        "end_label": scenario["end_label"],
+        "resolution": scenario["resolution"],
+        "summary": scenario["end_summary"].format(guest_name=scenario["guest_name"], address=scenario["address"]),
+        "property_id": property_id,
+        "booking_id": scenario["booking_id"],
+    }
 
 
 def guest_reply(property_id: str, history: list) -> str:

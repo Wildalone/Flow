@@ -2,6 +2,8 @@ const log = document.getElementById("log");
 const composer = document.getElementById("composer");
 const input = document.getElementById("messageInput");
 const resetBtn = document.getElementById("resetBtn");
+const wrapupBar = document.getElementById("wrapupBar");
+const wrapupBtn = document.getElementById("wrapupBtn");
 
 const SCENARIOS = [
   { id: "prop_a", label: "Online lock — 42 Oak St" },
@@ -53,6 +55,7 @@ function setComposerEnabled(enabled) {
 function showScenarioPicker() {
   log.innerHTML = "";
   composer.style.display = "none";
+  wrapupBar.style.display = "none";
 
   const wrap = document.createElement("div");
   wrap.className = "scenario-menu";
@@ -84,8 +87,44 @@ async function startScenario(propertyId) {
   log.innerHTML = "";
   addBubble("assistant", data.opening);
   composer.style.display = "flex";
+  wrapupBar.style.display = "flex";
   setComposerEnabled(true);
   input.focus();
+}
+
+async function wrapUp() {
+  setComposerEnabled(false);
+  wrapupBtn.disabled = true;
+  const res = await fetch("/api/persona/end", { method: "POST" });
+  const data = await res.json();
+  composer.style.display = "none";
+  wrapupBar.style.display = "none";
+
+  if (!res.ok) {
+    addBubble("error", data.error || "Something went wrong wrapping this up.");
+    setComposerEnabled(true);
+    wrapupBtn.disabled = false;
+    return;
+  }
+
+  const panel = document.createElement("div");
+  panel.className = "end-panel";
+  const badge = document.createElement("div");
+  badge.className = `end-badge ${data.end_class}`;
+  badge.textContent = data.end_label;
+  panel.appendChild(badge);
+  const note = document.createElement("div");
+  note.className = "log-note";
+  note.textContent = "✓ Logged to the incident record.";
+  panel.appendChild(note);
+  const restart = document.createElement("button");
+  restart.className = "restart-btn";
+  restart.type = "button";
+  restart.textContent = "↺ Try another scenario";
+  restart.addEventListener("click", showScenarioPicker);
+  panel.appendChild(restart);
+  log.appendChild(panel);
+  log.scrollTop = log.scrollHeight;
 }
 
 composer.addEventListener("submit", async (e) => {
@@ -117,6 +156,8 @@ composer.addEventListener("submit", async (e) => {
   setComposerEnabled(true);
   input.focus();
 });
+
+wrapupBtn.addEventListener("click", wrapUp);
 
 resetBtn.addEventListener("click", async () => {
   await fetch("/api/persona/reset", { method: "POST" });
