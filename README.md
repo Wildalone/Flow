@@ -4,9 +4,9 @@ A host-facing assistant that closes the loop on one real short-term-rental opera
 
 The guided walkthrough at `/` steps through the flow one decision at a time: a guest message comes in, you pick how the agent responds, that reveals the guest's reply as the next set of options, and so on — branching through the happy path and every messy edge (offline lock, no smart lock on file, an unresponsive key holder, an address that doesn't match any booking) until the incident is logged and the guest is messaged. Every ending is real: reaching it writes an actual entry to the incident log.
 
-There's also an AI chat prototype at `/chat` — free-form text, driven live by a Groq/Llama tool-calling agent that decides which actions to take and asks for confirmation before anything with a real-world effect. It's the earlier, more ambitious version of this project; see the journey doc for why the guided walkthrough became the primary demo instead (short version: a live third-party model call is the wrong thing to depend on mid-recording).
+There's also an AI chat prototype at `/chat` — a role-reversed roleplay where you play the host and a live Groq/Llama model plays the guest. Pick a scenario (online lock, offline lock, or no lock with an unresponsive key holder) and the AI stays grounded in that property's real state: tell it you've remotely reset a lock that's actually offline and it will push back instead of thanking you for a fix that didn't happen. It's the second iteration of this project's live-AI mode — the first was a tool-calling agent that decided which actions to take, which turned out to be too unreliable (rate limits, malformed tool calls, contradictory repeat actions) to depend on mid-recording. See the journey doc for that story.
 
-Built with FastAPI. The guided walkthrough is a deterministic decision tree (no LLM calls, so it can't fail mid-demo); the chat prototype uses Groq (Llama 3.1 8B, OpenAI-compatible tool calling). Both share the same action registry and mock property/booking data standing in for a real property-management system.
+Built with FastAPI. The guided walkthrough is a deterministic decision tree (no LLM calls, so it can't fail mid-demo); the chat prototype uses Groq (Llama 3.1 8B) for plain grounded chat completions — no tool-calling involved, so the malformed-function-call failure mode is structurally impossible. Both share the same mock property/booking data standing in for a real property-management system, and the same `/api/log-incident` endpoint for writing real incident records.
 
 ## Setup
 
@@ -37,13 +37,15 @@ Every ending shows a Resolved / Escalated / Needs-follow-up badge and confirms t
 ```
 app/
   main.py          FastAPI app: serves both UIs, /api/log-incident (deterministic),
-                   and /api/chat, /api/confirm, /api/reset (AI prototype)
-  agent.py         Groq tool-use loop for the /chat prototype (READ actions auto-run,
-                   WRITE actions wait for confirmation)
+                   and /api/persona/* (the AI-plays-the-guest chat prototype)
+  persona.py       Grounded guest-roleplay chat: per-scenario ground truth + explicit
+                   reaction instructions, plain chat completion, no tool-calling at all
+  agent.py         Earlier tool-calling agent prototype (kept for the journey doc's
+                   story; no longer wired to a route)
   store.py         Loads/saves the mock JSON data
   actions/         One module per tool: booking lookup, lock status/reset, backup key dispatch,
                    incident logging, guest messaging — each registered via a small Action registry
 data/              Mock properties, bookings, and the incident log the app writes to
 static/            index.html + scenario.js — the guided walkthrough (primary)
-                   chat.html + app.js — the AI chat prototype
+                   chat.html + persona.js — the AI chat prototype
 ```

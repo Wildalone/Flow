@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent
+from . import persona
 from .actions import get_action
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,15 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 app = FastAPI(title="Lockout Flow")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-SESSION: dict = {"messages": [], "pending": None}
-
-
-class ChatRequest(BaseModel):
-    message: str
-
-
-class ConfirmRequest(BaseModel):
-    approved: bool
+PERSONA_SESSION: dict = {"property_id": None, "history": []}
 
 
 class LogIncidentRequest(BaseModel):
@@ -34,6 +26,14 @@ class LogIncidentRequest(BaseModel):
     resolution: str
     property_id: str | None = None
     booking_id: str | None = None
+
+
+class PersonaStartRequest(BaseModel):
+    property_id: str
+
+
+class PersonaReplyRequest(BaseModel):
+    message: str
 
 
 @app.get("/")
@@ -62,79 +62,46 @@ def health():
     return {"ok": True}
 
 
-@app.post("/api/reset")
-def reset():
-    SESSION["messages"] = []
-    SESSION["pending"] = None
+@app.get("/api/persona/scenarios")
+def persona_scenarios():
+    return {
+        pid: {"guest_name": s["guest_name"], "address": s["address"], "nickname": s["nickname"]}
+        for pid, s in persona.SCENARIOS.items()
+    }
+
+
+@app.post("/api/persona/start")
+def persona_start(req: PersonaStartRequest):
+    scenario = persona.SCENARIOS.get(req.property_id)
+    if scenario is None:
+        return JSONResponse({"error": "Unknown scenario."}, status_code=400)
+    PERSONA_SESSION["property_id"] = req.property_id
+    PERSONA_SESSION["history"] = [{"role": "assistant", "content": scenario["opening"]}]
+    return {"guest_name": scenario["guest_name"], "address": scenario["address"], "opening": scenario["opening"]}
+
+
+@app.post("/api/persona/reply")
+def persona_reply(req: PersonaReplyRequest):
+    if PERSONA_SESSION["property_id"] is None:
+        return JSONResponse({"error": "No active scenario. Pick one to start."}, status_code=400)
+    PERSONA_SESSION["history"].append({"role": "user", "content": req.message})
+    try:
+        reply = persona.guest_reply(PERSONA_SESSION["property_id"], PERSONA_SESSION["history"])
+    except RuntimeError as e:
+        PERSONA_SESSION["history"].pop()
+        return JSONResponse({"error": str(e)}, status_code=400)
+    except Exception:
+        PERSONA_SESSION["history"].pop()
+        logging.exception("Unexpected error in /api/persona/reply")
+        return JSONResponse(
+            {"error": "Something went wrong generating the guest's reply. Try again."}, status_code=500
+        )
+    PERSONA_SESSION["history"].append({"role": "assistant", "content": reply})
+    return {"reply": reply}
+
+
+@app.post("/api/persona/reset")
+def persona_reset():
+    PERSONA_SESSION["property_id"] = None
+    PERSONA_SESSION["history"] = []
     return {"reset": True}
-
-
-@app.post("/api/chat")
-def chat(req: ChatRequest):
-    if SESSION["pending"] is not None:
-        return JSONResponse(
-            {"error": "There's a pending action awaiting confirmation. Confirm or cancel it first."},
-            status_code=409,
-        )
-    SESSION["messages"].append({"role": "user", "content": req.message})
-    try:
-        result = agent.run_turn(SESSION["messages"])
-    except RuntimeError as e:
-        SESSION["messages"].pop()
-        return JSONResponse({"error": str(e)}, status_code=400)
-    except Exception:
-        SESSION["messages"].pop()
-        logging.exception("Unexpected error in /api/chat")
-        return JSONResponse(
-            {"error": "Something unexpected went wrong handling that message. Try rephrasing, or click Reset demo."},
-            status_code=500,
-        )
-    SESSION["messages"] = result["messages"]
-    return _respond(result)
-
-
-@app.post("/api/confirm")
-def confirm(req: ConfirmRequest):
-    pending = SESSION["pending"]
-    if pending is None:
-        return JSONResponse({"error": "No pending action."}, status_code=400)
-    try:
-        result = agent.resolve_pending(
-            SESSION["messages"],
-            tool_call_id=pending["tool_call_id"],
-            action_name=pending["action_name"],
-            action_input=pending["action_input"],
-            approved=req.approved,
-            prior_tool_results=pending["prior_tool_results"],
-        )
-    except RuntimeError as e:
-        # The action itself already ran inside resolve_pending before the follow-up
-        # model call failed, so clear the pending state rather than leaving it stuck.
-        SESSION["pending"] = None
-        return JSONResponse({"error": str(e)}, status_code=400)
-    except Exception:
-        SESSION["pending"] = None
-        logging.exception("Unexpected error in /api/confirm")
-        return JSONResponse(
-            {"error": "Something unexpected went wrong completing that action. Try rephrasing, or click Reset demo."},
-            status_code=500,
-        )
-    SESSION["messages"] = result["messages"]
-    return _respond(result)
-
-
-def _respond(result: dict):
-    if result["type"] == "pending_action":
-        SESSION["pending"] = {
-            "tool_call_id": result["tool_call_id"],
-            "action_name": result["action_name"],
-            "action_input": result["action_input"],
-            "prior_tool_results": result["prior_tool_results"],
-        }
-        return {
-            "type": "pending_action",
-            "action_name": result["action_name"],
-            "action_input": result["action_input"],
-        }
-    SESSION["pending"] = None
-    return {"type": "text", "text": result["text"]}
