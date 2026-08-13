@@ -14,6 +14,8 @@ from .registry import READ, WRITE, register
 )
 def check_lock_status(property_id: str) -> dict:
     prop = find_property(property_id)
+    if prop is None:
+        return {"error": "unknown_property_id", "property_id": property_id}
     if not prop["has_smart_lock"]:
         return {"has_smart_lock": False}
     return {"has_smart_lock": True, "lock_status": prop["lock_status"]}
@@ -35,6 +37,8 @@ def check_lock_status(property_id: str) -> dict:
 )
 def reset_smart_lock(property_id: str) -> dict:
     prop = find_property(property_id)
+    if prop is None:
+        return {"success": False, "reason": "unknown_property_id"}
     if not prop["has_smart_lock"]:
         return {"success": False, "reason": "no_smart_lock"}
     if prop["lock_status"] != "online":

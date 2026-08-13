@@ -18,6 +18,8 @@ from .registry import WRITE, register
 )
 def dispatch_backup_key(property_id: str) -> dict:
     prop = find_property(property_id)
+    if prop is None:
+        return {"dispatched": False, "reason": "unknown_property_id"}
     contact = prop["backup_key_contact"]
     if contact["responds"]:
         return {

@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -57,6 +58,13 @@ def chat(req: ChatRequest):
     except RuntimeError as e:
         SESSION["messages"].pop()
         return JSONResponse({"error": str(e)}, status_code=400)
+    except Exception:
+        SESSION["messages"].pop()
+        logging.exception("Unexpected error in /api/chat")
+        return JSONResponse(
+            {"error": "Something unexpected went wrong handling that message. Try rephrasing, or click Reset demo."},
+            status_code=500,
+        )
     SESSION["messages"] = result["messages"]
     return _respond(result)
 
@@ -80,6 +88,13 @@ def confirm(req: ConfirmRequest):
         # model call failed, so clear the pending state rather than leaving it stuck.
         SESSION["pending"] = None
         return JSONResponse({"error": str(e)}, status_code=400)
+    except Exception:
+        SESSION["pending"] = None
+        logging.exception("Unexpected error in /api/confirm")
+        return JSONResponse(
+            {"error": "Something unexpected went wrong completing that action. Try rephrasing, or click Reset demo."},
+            status_code=500,
+        )
     SESSION["messages"] = result["messages"]
     return _respond(result)
 

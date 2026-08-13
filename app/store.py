@@ -22,8 +22,8 @@ def load_bookings() -> list:
     return _load("bookings.json")["bookings"]
 
 
-def find_property(property_id: str) -> dict:
-    return next(p for p in load_properties() if p["id"] == property_id)
+def find_property(property_id: str) -> dict | None:
+    return next((p for p in load_properties() if p["id"] == property_id), None)
 
 
 def append_incident(incident: dict) -> None:

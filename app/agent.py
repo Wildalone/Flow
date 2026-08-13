@@ -22,7 +22,7 @@ Handle messy edges honestly instead of guessing:
 """
 
 MAX_STEPS = 8
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "llama-3.1-8b-instant"
 
 
 def _client() -> Groq:
@@ -76,6 +76,35 @@ def _had_successful_lookup(messages: list) -> bool:
         if isinstance(content, dict) and content.get("found") and "booking" in content:
             return True
     return False
+
+
+ONCE_ONLY_ACTIONS = {"log_incident", "send_guest_message"}
+
+
+def _completed_once_only_actions(messages: list) -> set:
+    """Names of once-only WRITE actions that already ran (approved, not cancelled
+    or deferred) earlier in this conversation."""
+    call_name_by_id = {}
+    for m in messages:
+        if m.get("role") == "assistant" and m.get("tool_calls"):
+            for tc in m["tool_calls"]:
+                call_name_by_id[tc["id"]] = tc["function"]["name"]
+
+    done = set()
+    for m in messages:
+        if m.get("role") != "tool":
+            continue
+        name = call_name_by_id.get(m.get("tool_call_id"))
+        if name not in ONCE_ONLY_ACTIONS:
+            continue
+        try:
+            content = json.loads(m["content"])
+        except (TypeError, ValueError):
+            content = None
+        if isinstance(content, dict) and (content.get("cancelled_by_host") or content.get("deferred")):
+            continue
+        done.add(name)
+    return done
 
 
 def run_turn(messages: list) -> dict:
@@ -154,10 +183,24 @@ def run_turn(messages: list) -> dict:
 
         tool_results = []
         pending = None
+        completed_once_only = _completed_once_only_actions(messages)
         for tc in tool_calls:
             action = get_action(tc.function.name)
             args = json.loads(tc.function.arguments or "{}")
             if action.kind == WRITE:
+                if tc.function.name in ONCE_ONLY_ACTIONS and tc.function.name in completed_once_only:
+                    # Already done earlier in this conversation — don't ask the host
+                    # to confirm (or worse, log) a contradictory repeat.
+                    tool_results.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "content": _stringify(
+                                {"already_done": True, "note": f"{tc.function.name} already ran earlier in this conversation."}
+                            ),
+                        }
+                    )
+                    continue
                 if pending is None:
                     pending = (tc, args)
                 else:
