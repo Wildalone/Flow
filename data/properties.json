@@ -1,0 +1,31 @@
+{
+  "properties": [
+    {
+      "id": "prop_a",
+      "address": "42 Oak St",
+      "nickname": "The Oak St Cottage",
+      "has_smart_lock": true,
+      "lock_status": "online",
+      "lock_id": "lock_oak_42",
+      "backup_key_contact": { "name": "Sam (cleaner)", "phone": "555-0142", "responds": true }
+    },
+    {
+      "id": "prop_b",
+      "address": "118 Maple Ave",
+      "nickname": "Maple Loft",
+      "has_smart_lock": true,
+      "lock_status": "offline",
+      "lock_id": "lock_maple_118",
+      "backup_key_contact": { "name": "Jordan (neighbor)", "phone": "555-0198", "responds": true }
+    },
+    {
+      "id": "prop_c",
+      "address": "7 Birch Court",
+      "nickname": "Birch Court Bungalow",
+      "has_smart_lock": false,
+      "lock_status": null,
+      "lock_id": null,
+      "backup_key_contact": { "name": "Riley (property manager)", "phone": "555-0177", "responds": false }
+    }
+  ]
+}

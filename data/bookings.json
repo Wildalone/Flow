@@ -1,0 +1,28 @@
+{
+  "bookings": [
+    {
+      "id": "bk_1001",
+      "property_id": "prop_a",
+      "guest_name": "Priya Nandakumar",
+      "check_in": "2026-08-10",
+      "check_out": "2026-08-16",
+      "status": "active"
+    },
+    {
+      "id": "bk_1002",
+      "property_id": "prop_b",
+      "guest_name": "Marcus Webb",
+      "check_in": "2026-08-09",
+      "check_out": "2026-08-14",
+      "status": "active"
+    },
+    {
+      "id": "bk_1003",
+      "property_id": "prop_c",
+      "guest_name": "Elena Torres",
+      "check_in": "2026-08-11",
+      "check_out": "2026-08-18",
+      "status": "active"
+    }
+  ]
+}
