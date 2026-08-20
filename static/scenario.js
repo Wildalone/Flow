@@ -1,23 +1,23 @@
-const START = "guest_open";
+const START = "agent_open";
 
 const TREE = {
-  guest_open: {
-    speaker: "guest",
-    text: "Hi, I'm locked out of my rental at 42 Oak St! I've been standing outside for 10 minutes, please help.",
-    choices: [{ label: "Continue →", next: "agent_lookup" }],
-  },
-  agent_lookup: {
+  agent_open: {
     speaker: "agent",
-    text: "Let me pull up your booking... Found it , you're checked in at The Oak St Cottage through the 16th. Checking the smart lock now.",
+    text: "Hi, this is Alex from guest support — we've got a guest locked out at 42 Oak St (The Oak St Cottage). Want me to check what's going on and handle it?",
+    choices: [{ label: "Continue →", next: "client_ok" }],
+  },
+  client_ok: {
+    speaker: "client",
+    text: "Yes, please go ahead and take care of it.",
     choices: [{ label: "Continue →", next: "agent_branch" }],
   },
   agent_branch: {
     speaker: "agent",
-    text: "Here's what I find when I check the property:",
+    text: "Checking the smart lock now... here's what I find:",
     choicesLabel: "What does the agent find?",
     choices: [
-      { label: "✅ Lock is online , reset it remotely", next: "agent_online" },
-      { label: "⚠️ Lock is offline , can't reset remotely", next: "agent_offline" },
+      { label: "✅ Lock is online — reset it remotely", next: "agent_online" },
+      { label: "⚠️ Lock is offline — can't reset remotely", next: "agent_offline" },
       { label: "⚠️ No smart lock on file for this property", next: "agent_nolock" },
       { label: "❌ Address doesn't match any booking on file", next: "agent_clarify" },
     ],
@@ -26,24 +26,24 @@ const TREE = {
   // Branch 1: online lock, quick resolve
   agent_online: {
     speaker: "agent",
-    text: "Lock is online , resetting it remotely right now.",
-    choices: [{ label: "Continue →", next: "guest_online_thanks" }],
+    text: "Lock is online — resetting it remotely right now.",
+    choices: [{ label: "Continue →", next: "client_online_thanks" }],
   },
-  guest_online_thanks: {
-    speaker: "guest",
-    text: "Oh, it just unlocked! Thank you so much!",
+  client_online_thanks: {
+    speaker: "client",
+    text: "Great, thanks for handling that so quickly!",
     choices: [{ label: "Continue →", next: "end_resolved_reset" }],
   },
   end_resolved_reset: {
     speaker: "agent",
-    text: "Glad that's sorted. Logging this incident and sending you a quick confirmation message.",
+    text: "Glad that's sorted. Logging this incident and confirming with the guest that they're back in.",
     end: "resolved",
     endLabel: "Resolved",
     logIncident: {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "resolved_remote_reset",
-      summary: "Guest locked out at 42 Oak St. Smart lock was online , reset remotely, resolved immediately.",
+      summary: "Guest locked out at 42 Oak St. Smart lock was online — client authorized a remote reset, resolved immediately.",
     },
     choices: [],
   },
@@ -51,38 +51,38 @@ const TREE = {
   // Branch 2/3: offline or no lock -> dispatch backup key
   agent_offline: {
     speaker: "agent",
-    text: "Lock is offline , I can't reset it remotely. Dispatching your backup-key holder now.",
-    choices: [{ label: "Continue →", next: "guest_waiting_key" }],
+    text: "Lock is offline — I can't reset it remotely. Want me to dispatch the backup-key holder?",
+    choices: [{ label: "Continue →", next: "client_waiting_key" }],
   },
   agent_nolock: {
     speaker: "agent",
-    text: "This property doesn't have a smart lock on file , dispatching your backup-key holder now.",
-    choices: [{ label: "Continue →", next: "guest_waiting_key" }],
+    text: "This property doesn't have a smart lock on file. Want me to dispatch the backup-key holder?",
+    choices: [{ label: "Continue →", next: "client_waiting_key" }],
   },
-  guest_waiting_key: {
-    speaker: "guest",
-    text: "Okay... how long will that take? I'm getting cold out here.",
+  client_waiting_key: {
+    speaker: "client",
+    text: "Yes, please. Let me know once they're in touch.",
     choicesLabel: "Does the key holder respond?",
     choices: [
-      { label: "✅ Key holder confirms , 10 minutes out", next: "guest_key_coming" },
+      { label: "✅ Key holder confirms — 10 minutes out", next: "client_key_coming" },
       { label: "⚠️ No response from the key holder", next: "agent_escalate" },
     ],
   },
-  guest_key_coming: {
-    speaker: "guest",
-    text: "Okay, thank you , I'll wait by the door.",
+  client_key_coming: {
+    speaker: "client",
+    text: "Sounds good, thanks for the update.",
     choices: [{ label: "Continue →", next: "end_resolved_key" }],
   },
   end_resolved_key: {
     speaker: "agent",
-    text: "The key holder let the guest in. Logging this incident and sending a follow-up message.",
+    text: "The key holder let the guest in. Logging this incident now.",
     end: "resolved",
     endLabel: "Resolved",
     logIncident: {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "resolved_backup_key",
-      summary: "Guest locked out at 42 Oak St. No remote reset available , backup key holder dispatched and responded, guest let in.",
+      summary: "Guest locked out at 42 Oak St. No remote reset available — client authorized dispatching the backup key holder, who responded and let the guest in.",
     },
     choices: [],
   },
@@ -90,24 +90,24 @@ const TREE = {
   // Escalation
   agent_escalate: {
     speaker: "agent",
-    text: "I'm not able to reach the backup-key holder. I won't leave you waiting on a false promise , I'm asking the host to call them directly right now.",
-    choices: [{ label: "Continue →", next: "guest_escalate_reply" }],
+    text: "I'm not able to reach the backup-key holder. I don't want to leave the guest waiting on a false promise — want to reach out to them directly?",
+    choices: [{ label: "Continue →", next: "client_escalate_reply" }],
   },
-  guest_escalate_reply: {
-    speaker: "guest",
-    text: "Okay... please hurry, it's getting late.",
+  client_escalate_reply: {
+    speaker: "client",
+    text: "Yes, I'll call them directly right now.",
     choices: [{ label: "Continue →", next: "end_escalated" }],
   },
   end_escalated: {
     speaker: "agent",
-    text: "Logging this as an escalated incident so the host follows up personally, and sending you an honest status update instead of a false all-clear.",
+    text: "Logging this as an escalated incident, and letting the guest know honestly that you're following up personally instead of promising something that hasn't happened yet.",
     end: "escalated",
-    endLabel: "Escalated , host notified to call directly",
+    endLabel: "Escalated — client following up directly",
     logIncident: {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "escalated_no_response",
-      summary: "Guest locked out at 42 Oak St. Backup key holder unreachable , escalated to host for a direct call instead of claiming it was resolved.",
+      summary: "Guest locked out at 42 Oak St. Backup key holder unreachable — escalated for the client to personally follow up instead of claiming it was resolved.",
     },
     choices: [],
   },
@@ -115,33 +115,33 @@ const TREE = {
   // Branch 4: wrong / unmatched address
   agent_clarify: {
     speaker: "agent",
-    text: "I couldn't find an active booking at that exact address. Could you double-check it against your booking confirmation?",
-    choicesLabel: "Does the guest confirm the right address?",
+    text: "I couldn't find an active booking at that exact address the guest gave me. Could you confirm which property this actually is?",
+    choicesLabel: "Does the client confirm the right property?",
     choices: [
-      { label: "✅ Guest gives the correct address", next: "guest_corrects" },
-      { label: "❌ Guest still isn't sure", next: "guest_unsure" },
+      { label: "✅ Client confirms the correct address", next: "client_corrects" },
+      { label: "❌ Client isn't sure either", next: "client_unsure" },
     ],
   },
-  guest_corrects: {
-    speaker: "guest",
-    text: "Oh sorry , it's actually 42 Oak St, I misread my confirmation email!",
-    choices: [{ label: "Continue →", next: "agent_lookup" }],
+  client_corrects: {
+    speaker: "client",
+    text: "Oh, that's actually 42 Oak St — the guest must have mentioned it wrong.",
+    choices: [{ label: "Continue →", next: "agent_branch" }],
   },
-  guest_unsure: {
-    speaker: "guest",
-    text: "I'm not sure... I booked through a friend's account.",
+  client_unsure: {
+    speaker: "client",
+    text: "I'm not sure either — let me check the reservation system and get back to you.",
     choices: [{ label: "Continue →", next: "end_needs_followup" }],
   },
   end_needs_followup: {
     speaker: "agent",
-    text: "I can't act without confirming which property this is , flagging this for the host to follow up personally rather than guessing.",
+    text: "Understood — I'll hold off contacting the guest with a fix until we've confirmed which property this actually is, rather than guessing.",
     end: "followup",
-    endLabel: "Needs host follow-up",
+    endLabel: "Needs client follow-up",
     logIncident: {
       property_id: null,
       booking_id: null,
       resolution: "escalated_no_booking_match",
-      summary: "Guest reported a lockout but the address didn't match any booking, and the guest couldn't confirm it. Flagged for the host to follow up directly.",
+      summary: "Guest reported a lockout but the address didn't match any booking, and the client couldn't confirm it either. Flagged for the client to follow up directly.",
     },
     choices: [],
   },
@@ -159,11 +159,13 @@ const restartTopBtn = document.getElementById("restartTop");
 
 function addTurn(node) {
   const turn = document.createElement("div");
-  turn.className = `turn ${node.speaker}`;
+  // Reuse the existing left/white vs right/orange style classes regardless of label text.
+  const cssClass = node.speaker === "agent" ? "agent" : "guest";
+  turn.className = `turn ${cssClass}`;
 
   const label = document.createElement("div");
   label.className = "speaker-label";
-  label.textContent = node.speaker === "guest" ? "Guest" : "Agent";
+  label.textContent = node.speaker === "agent" ? "Agent" : "Client";
   turn.appendChild(label);
 
   const bubble = document.createElement("div");
@@ -211,7 +213,7 @@ async function logIncident(payload) {
       body: JSON.stringify(payload),
     });
   } catch (err) {
-    // Non-fatal for the walkthrough , the UI already shows the outcome either way.
+    // Non-fatal for the walkthrough — the UI already shows the outcome either way.
   }
 }
 
@@ -277,7 +279,7 @@ function selectChoice(nodeId) {
 function jumpTo(nodeId) {
   log.innerHTML = "";
   addTurn(TREE[START]);
-  addTurn(TREE.agent_lookup);
+  addTurn(TREE.client_ok);
   selectChoice(nodeId);
 }
 
