@@ -3,7 +3,7 @@ const START = "agent_open";
 const TREE = {
   agent_open: {
     speaker: "agent",
-    text: "Hi, this is Alex from guest support — we've got a guest locked out at 42 Oak St (The Oak St Cottage). Want me to check what's going on and handle it?",
+    text: "Hi, this is Alex from guest support, we've got a guest locked out at 42 Oak St (The Oak St Cottage). Want me to check what's going on and handle it?",
     choices: [{ label: "Continue →", next: "client_ok" }],
   },
   client_ok: {
@@ -16,8 +16,8 @@ const TREE = {
     text: "Checking the smart lock now... here's what I find:",
     choicesLabel: "What does the agent find?",
     choices: [
-      { label: "✅ Lock is online — reset it remotely", next: "agent_online" },
-      { label: "⚠️ Lock is offline — can't reset remotely", next: "agent_offline" },
+      { label: "✅ Lock is online, reset it remotely", next: "agent_online" },
+      { label: "⚠️ Lock is offline, can't reset remotely", next: "agent_offline" },
       { label: "⚠️ No smart lock on file for this property", next: "agent_nolock" },
       { label: "❌ Address doesn't match any booking on file", next: "agent_clarify" },
     ],
@@ -26,7 +26,7 @@ const TREE = {
   // Branch 1: online lock, quick resolve
   agent_online: {
     speaker: "agent",
-    text: "Lock is online — resetting it remotely right now.",
+    text: "Lock is online, resetting it remotely right now.",
     choices: [{ label: "Continue →", next: "client_online_thanks" }],
   },
   client_online_thanks: {
@@ -43,7 +43,7 @@ const TREE = {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "resolved_remote_reset",
-      summary: "Guest locked out at 42 Oak St. Smart lock was online — client authorized a remote reset, resolved immediately.",
+      summary: "Guest locked out at 42 Oak St. Smart lock was online, client authorized a remote reset, resolved immediately.",
     },
     choices: [],
   },
@@ -51,7 +51,7 @@ const TREE = {
   // Branch 2/3: offline or no lock -> dispatch backup key
   agent_offline: {
     speaker: "agent",
-    text: "Lock is offline — I can't reset it remotely. Want me to dispatch the backup-key holder?",
+    text: "Lock is offline, I can't reset it remotely. Want me to dispatch the backup-key holder?",
     choices: [{ label: "Continue →", next: "client_waiting_key" }],
   },
   agent_nolock: {
@@ -64,7 +64,7 @@ const TREE = {
     text: "Yes, please. Let me know once they're in touch.",
     choicesLabel: "Does the key holder respond?",
     choices: [
-      { label: "✅ Key holder confirms — 10 minutes out", next: "client_key_coming" },
+      { label: "✅ Key holder confirms, 10 minutes out", next: "client_key_coming" },
       { label: "⚠️ No response from the key holder", next: "agent_escalate" },
     ],
   },
@@ -82,7 +82,7 @@ const TREE = {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "resolved_backup_key",
-      summary: "Guest locked out at 42 Oak St. No remote reset available — client authorized dispatching the backup key holder, who responded and let the guest in.",
+      summary: "Guest locked out at 42 Oak St. No remote reset available, client authorized dispatching the backup key holder, who responded and let the guest in.",
     },
     choices: [],
   },
@@ -90,7 +90,7 @@ const TREE = {
   // Escalation
   agent_escalate: {
     speaker: "agent",
-    text: "I'm not able to reach the backup-key holder. I don't want to leave the guest waiting on a false promise — want to reach out to them directly?",
+    text: "I'm not able to reach the backup-key holder. I don't want to leave the guest waiting on a false promise, want to reach out to them directly?",
     choices: [{ label: "Continue →", next: "client_escalate_reply" }],
   },
   client_escalate_reply: {
@@ -102,12 +102,12 @@ const TREE = {
     speaker: "agent",
     text: "Logging this as an escalated incident, and letting the guest know honestly that you're following up personally instead of promising something that hasn't happened yet.",
     end: "escalated",
-    endLabel: "Escalated — client following up directly",
+    endLabel: "Escalated, client following up directly",
     logIncident: {
       property_id: "prop_a",
       booking_id: "bk_1001",
       resolution: "escalated_no_response",
-      summary: "Guest locked out at 42 Oak St. Backup key holder unreachable — escalated for the client to personally follow up instead of claiming it was resolved.",
+      summary: "Guest locked out at 42 Oak St. Backup key holder unreachable, escalated for the client to personally follow up instead of claiming it was resolved.",
     },
     choices: [],
   },
@@ -124,17 +124,17 @@ const TREE = {
   },
   client_corrects: {
     speaker: "client",
-    text: "Oh, that's actually 42 Oak St — the guest must have mentioned it wrong.",
+    text: "Oh, that's actually 42 Oak St, the guest must have mentioned it wrong.",
     choices: [{ label: "Continue →", next: "agent_branch" }],
   },
   client_unsure: {
     speaker: "client",
-    text: "I'm not sure either — let me check the reservation system and get back to you.",
+    text: "I'm not sure either, let me check the reservation system and get back to you.",
     choices: [{ label: "Continue →", next: "end_needs_followup" }],
   },
   end_needs_followup: {
     speaker: "agent",
-    text: "Understood — I'll hold off contacting the guest with a fix until we've confirmed which property this actually is, rather than guessing.",
+    text: "Understood, I'll hold off contacting the guest with a fix until we've confirmed which property this actually is, rather than guessing.",
     end: "followup",
     endLabel: "Needs client follow-up",
     logIncident: {
@@ -213,7 +213,7 @@ async function logIncident(payload) {
       body: JSON.stringify(payload),
     });
   } catch (err) {
-    // Non-fatal for the walkthrough — the UI already shows the outcome either way.
+    // Non-fatal for the walkthrough, the UI already shows the outcome either way.
   }
 }
 

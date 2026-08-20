@@ -6,9 +6,9 @@ const wrapupBar = document.getElementById("wrapupBar");
 const wrapupBtn = document.getElementById("wrapupBtn");
 
 const SCENARIOS = [
-  { id: "prop_a", label: "Online lock — 42 Oak St" },
-  { id: "prop_b", label: "Offline lock — 118 Maple Ave" },
-  { id: "prop_c", label: "No lock, unresponsive key holder — 7 Birch Court" },
+  { id: "prop_a", label: "Online lock, 42 Oak St" },
+  { id: "prop_b", label: "Offline lock, 118 Maple Ave" },
+  { id: "prop_c", label: "No lock, unresponsive key holder, 7 Birch Court" },
 ];
 
 function addBubble(kind, text) {
@@ -62,7 +62,7 @@ function showScenarioPicker() {
 
   const label = document.createElement("div");
   label.className = "scenario-menu-label";
-  label.textContent = "Pick a lockout scenario — you'll play the support agent, the AI plays the host you're messaging:";
+  label.textContent = "Pick a lockout scenario, you'll play the support agent, the AI plays the host you're messaging:";
   wrap.appendChild(label);
 
   SCENARIOS.forEach((s) => {
@@ -88,7 +88,7 @@ async function startScenario(propertyId) {
   const hint = document.createElement("div");
   hint.className = "log-note";
   hint.style.alignSelf = "center";
-  hint.textContent = `You message the host first — e.g. "${data.starter}"`;
+  hint.textContent = `You message the host first, e.g. "${data.starter}"`;
   log.appendChild(hint);
   composer.style.display = "flex";
   wrapupBar.style.display = "flex";
