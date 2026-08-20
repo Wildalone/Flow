@@ -76,8 +76,8 @@ def persona_start(req: PersonaStartRequest):
     if scenario is None:
         return JSONResponse({"error": "Unknown scenario."}, status_code=400)
     PERSONA_SESSION["property_id"] = req.property_id
-    PERSONA_SESSION["history"] = [{"role": "assistant", "content": scenario["opening"]}]
-    return {"address": scenario["address"], "opening": scenario["opening"]}
+    PERSONA_SESSION["history"] = []
+    return {"address": scenario["address"], "starter": scenario["starter"]}
 
 
 @app.post("/api/persona/reply")
@@ -86,7 +86,7 @@ def persona_reply(req: PersonaReplyRequest):
         return JSONResponse({"error": "No active scenario. Pick one to start."}, status_code=400)
     PERSONA_SESSION["history"].append({"role": "user", "content": req.message})
     try:
-        reply = persona.guest_reply(PERSONA_SESSION["property_id"], PERSONA_SESSION["history"])
+        reply = persona.host_reply(PERSONA_SESSION["property_id"], PERSONA_SESSION["history"])
     except RuntimeError as e:
         PERSONA_SESSION["history"].pop()
         return JSONResponse({"error": str(e)}, status_code=400)
@@ -94,7 +94,7 @@ def persona_reply(req: PersonaReplyRequest):
         PERSONA_SESSION["history"].pop()
         logging.exception("Unexpected error in /api/persona/reply")
         return JSONResponse(
-            {"error": "Something went wrong generating the guest's reply. Try again."}, status_code=500
+            {"error": "Something went wrong generating the host's reply. Try again."}, status_code=500
         )
     PERSONA_SESSION["history"].append({"role": "assistant", "content": reply})
     return {"reply": reply}

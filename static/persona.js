@@ -26,7 +26,7 @@ function addBubble(kind, text) {
 
   const label = document.createElement("div");
   label.className = "speaker-label";
-  label.textContent = kind === "assistant" ? "Agent (AI)" : "You (Client)";
+  label.textContent = kind === "assistant" ? "Host (AI)" : "You (Agent)";
   turn.appendChild(label);
 
   const bubble = document.createElement("div");
@@ -41,7 +41,7 @@ function addBubble(kind, text) {
 function addTyping() {
   const el = document.createElement("div");
   el.className = "typing";
-  el.textContent = "Agent is typing…";
+  el.textContent = "Host is typing…";
   log.appendChild(el);
   log.scrollTop = log.scrollHeight;
   return el;
@@ -62,7 +62,7 @@ function showScenarioPicker() {
 
   const label = document.createElement("div");
   label.className = "scenario-menu-label";
-  label.textContent = "Pick a lockout scenario — you'll play the property owner, the AI plays the support agent contacting you:";
+  label.textContent = "Pick a lockout scenario — you'll play the support agent, the AI plays the host you're messaging:";
   wrap.appendChild(label);
 
   SCENARIOS.forEach((s) => {
@@ -85,7 +85,11 @@ async function startScenario(propertyId) {
   });
   const data = await res.json();
   log.innerHTML = "";
-  addBubble("assistant", data.opening);
+  const hint = document.createElement("div");
+  hint.className = "log-note";
+  hint.style.alignSelf = "center";
+  hint.textContent = `You message the host first — e.g. "${data.starter}"`;
+  log.appendChild(hint);
   composer.style.display = "flex";
   wrapupBar.style.display = "flex";
   setComposerEnabled(true);
