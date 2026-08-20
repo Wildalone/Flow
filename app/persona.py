@@ -2,64 +2,60 @@ import os
 
 from groq import BadRequestError, Groq, RateLimitError
 
-MODEL = "llama-3.1-8b-instant"
+MODEL = "openai/gpt-oss-20b"
 
 SCENARIOS = {
     "prop_a": {
-        "guest_name": "Priya Nandakumar",
         "address": "42 Oak St",
         "nickname": "The Oak St Cottage",
         "booking_id": "bk_1001",
         "reset_instruction": (
-            "If the host says they've remotely reset the lock: it DID genuinely work — the door is now "
-            "unlocked. Say so, be relieved, and thank them. Do not claim it's still locked."
+            "If the client tells you to go ahead and remotely reset the lock: it WILL genuinely work. "
+            "Report back that the reset succeeded and the guest is back in."
         ),
         "key_instruction": (
-            "The backup key holder (Sam, the cleaner) responds quickly and shows up if contacted."
+            "The backup key holder (Sam, the cleaner) responds quickly and shows up if you're told to contact them."
         ),
-        "opening": "Hi, I'm locked out of my rental at 42 Oak St! I've been standing outside for a few minutes now, can you help?",
+        "opening": "Hi, this is Alex from guest support — we've got a guest locked out at 42 Oak St (The Oak St Cottage). Wanted to loop you in — want me to try a remote lock reset?",
         "end_class": "resolved",
         "end_label": "Resolved",
         "resolution": "resolved_remote_reset",
-        "end_summary": "Guest {guest_name} was locked out at {address}. Smart lock was online — host resolved it with a remote reset.",
+        "end_summary": "Guest locked out at {address}. Client authorized a remote lock reset — it worked, guest is back in.",
     },
     "prop_b": {
-        "guest_name": "Marcus Webb",
         "address": "118 Maple Ave",
         "nickname": "Maple Loft",
         "booking_id": "bk_1002",
         "reset_instruction": (
-            "The lock is actually offline. If the host says they've remotely reset it, that CANNOT have "
-            "worked — the door is still locked no matter what they claim. Politely say it's still not "
-            "opening, don't agree that it worked."
+            "The lock is actually offline. If the client tells you to try a remote reset, report back "
+            "honestly that it did NOT work — the door's still locked, the lock isn't responding."
         ),
         "key_instruction": (
-            "The backup key holder (Jordan, a neighbor) responds and shows up if contacted."
+            "The backup key holder (Jordan, a neighbor) responds quickly and shows up if you're told to contact them."
         ),
-        "opening": "Hey, I can't get into my rental at 118 Maple Ave, the door won't budge. Please help!",
+        "opening": "Hi, this is Alex from guest support — guest's locked out at 118 Maple Ave (Maple Loft). Wanted to get your call on how to handle it.",
         "end_class": "resolved",
         "end_label": "Resolved",
         "resolution": "resolved_backup_key",
-        "end_summary": "Guest {guest_name} was locked out at {address}. Lock was offline — backup key holder dispatched and responded, guest let in.",
+        "end_summary": "Guest locked out at {address}. Remote reset failed (lock offline) — client authorized dispatching the backup key holder, who responded and let the guest in.",
     },
     "prop_c": {
-        "guest_name": "Elena Torres",
         "address": "7 Birch Court",
         "nickname": "Birch Court Bungalow",
         "booking_id": "bk_1003",
         "reset_instruction": (
-            "There is no smart lock on this property at all. If the host mentions resetting a lock "
-            "remotely, point out there's no smart lock here to reset."
+            "There's no smart lock on this property at all. If the client suggests a remote reset, tell "
+            "them there's nothing to reset here."
         ),
         "key_instruction": (
-            "The backup key holder (Riley, the property manager) does NOT respond, no matter how long "
-            "you wait or how many times the host says they've reached out."
+            "The backup key holder (Riley, the property manager) does NOT respond, no matter how many "
+            "times you're told to follow up with them."
         ),
-        "opening": "Hi, I'm locked out at 7 Birch Court and it's getting late. Can someone help me get in?",
+        "opening": "Hi, this is Alex from guest support — got a lockout at 7 Birch Court (Birch Court Bungalow), it's getting late for the guest. What do you want me to do?",
         "end_class": "escalated",
-        "end_label": "Escalated — host notified to call directly",
+        "end_label": "Escalated — needs the client's personal follow-up",
         "resolution": "escalated_no_response",
-        "end_summary": "Guest {guest_name} was locked out at {address}. No smart lock on file and backup key holder didn't respond — escalated for the host to call directly.",
+        "end_summary": "Guest locked out at {address}. No smart lock on file, backup key holder unresponsive — escalated for the client to personally follow up.",
     },
 }
 
@@ -75,18 +71,17 @@ def _client() -> Groq:
 
 def _system_prompt(scenario: dict) -> str:
     return (
-        f"You are role-playing as {scenario['guest_name']}, a guest locked out of their short-term "
-        f"rental at {scenario['address']} ({scenario['nickname']}). You are texting with the property "
-        "host to get help.\n\n"
-        "These instructions tell you exactly how to react — follow them precisely, don't improvise "
-        "outcomes that contradict them:\n"
+        "You are Alex, a guest-support agent messaging the CLIENT — the owner of a short-term rental "
+        f"property at {scenario['address']} ({scenario['nickname']}) — about a guest lockout, to get "
+        "their direction and coordinate a resolution.\n\n"
+        "These instructions tell you exactly how to report outcomes — follow them precisely, don't "
+        "invent an outcome that contradicts them:\n"
         f"- {scenario['reset_instruction']}\n"
-        f"- {scenario['key_instruction']} If the host says help is on the way but they in fact don't "
-        "respond, start neutral, then grow a bit more concerned the longer it drags on — don't invent "
-        "a failure that hasn't been stated.\n\n"
-        "Stay fully in character as the guest. Keep messages short and natural, like a real text message "
-        "(1-3 sentences), with no markdown and no function-call syntax of any kind — plain conversational "
-        "text only. Never break character or mention that you are an AI, a model, or a simulation."
+        f"- {scenario['key_instruction']} If the client is told help is on the way but that person in "
+        "fact doesn't respond, report that honestly rather than pretending it's handled.\n\n"
+        "Keep messages short and natural, like a real work chat message (1-3 sentences), with no "
+        "markdown and no function-call syntax of any kind — plain conversational text only. Never break "
+        "character or mention that you are an AI, a model, or a simulation."
     )
 
 
@@ -96,7 +91,7 @@ def end_state(property_id: str) -> dict:
         "end_class": scenario["end_class"],
         "end_label": scenario["end_label"],
         "resolution": scenario["resolution"],
-        "summary": scenario["end_summary"].format(guest_name=scenario["guest_name"], address=scenario["address"]),
+        "summary": scenario["end_summary"].format(address=scenario["address"]),
         "property_id": property_id,
         "booking_id": scenario["booking_id"],
     }
@@ -109,8 +104,9 @@ def guest_reply(property_id: str, history: list) -> str:
     try:
         response = client.chat.completions.create(
             model=MODEL,
-            max_tokens=200,
+            max_tokens=500,
             temperature=0.3,
+            reasoning_effort="low",
             messages=messages,
         )
     except RateLimitError as e:

@@ -65,7 +65,7 @@ def health():
 @app.get("/api/persona/scenarios")
 def persona_scenarios():
     return {
-        pid: {"guest_name": s["guest_name"], "address": s["address"], "nickname": s["nickname"]}
+        pid: {"address": s["address"], "nickname": s["nickname"]}
         for pid, s in persona.SCENARIOS.items()
     }
 
@@ -77,7 +77,7 @@ def persona_start(req: PersonaStartRequest):
         return JSONResponse({"error": "Unknown scenario."}, status_code=400)
     PERSONA_SESSION["property_id"] = req.property_id
     PERSONA_SESSION["history"] = [{"role": "assistant", "content": scenario["opening"]}]
-    return {"guest_name": scenario["guest_name"], "address": scenario["address"], "opening": scenario["opening"]}
+    return {"address": scenario["address"], "opening": scenario["opening"]}
 
 
 @app.post("/api/persona/reply")

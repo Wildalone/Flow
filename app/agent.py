@@ -22,7 +22,7 @@ Handle messy edges honestly instead of guessing:
 """
 
 MAX_STEPS = 8
-MODEL = "llama-3.1-8b-instant"
+MODEL = "openai/gpt-oss-20b"
 
 
 def _client() -> Groq:

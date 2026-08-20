@@ -26,7 +26,7 @@ function addBubble(kind, text) {
 
   const label = document.createElement("div");
   label.className = "speaker-label";
-  label.textContent = kind === "assistant" ? "Guest (AI)" : "You (Host)";
+  label.textContent = kind === "assistant" ? "Agent (AI)" : "You (Client)";
   turn.appendChild(label);
 
   const bubble = document.createElement("div");
@@ -41,7 +41,7 @@ function addBubble(kind, text) {
 function addTyping() {
   const el = document.createElement("div");
   el.className = "typing";
-  el.textContent = "Guest is typing…";
+  el.textContent = "Agent is typing…";
   log.appendChild(el);
   log.scrollTop = log.scrollHeight;
   return el;
@@ -62,7 +62,7 @@ function showScenarioPicker() {
 
   const label = document.createElement("div");
   label.className = "scenario-menu-label";
-  label.textContent = "Pick a guest scenario — you'll play the host, the AI plays the guest:";
+  label.textContent = "Pick a lockout scenario — you'll play the property owner, the AI plays the support agent contacting you:";
   wrap.appendChild(label);
 
   SCENARIOS.forEach((s) => {

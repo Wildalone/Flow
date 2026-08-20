@@ -4,9 +4,9 @@ A host-facing assistant that closes the loop on one real short-term-rental opera
 
 The guided walkthrough at `/` steps through the flow one decision at a time: a guest message comes in, you pick how the agent responds, that reveals the guest's reply as the next set of options, and so on — branching through the happy path and every messy edge (offline lock, no smart lock on file, an unresponsive key holder, an address that doesn't match any booking) until the incident is logged and the guest is messaged. Every ending is real: reaching it writes an actual entry to the incident log.
 
-There's also an AI chat prototype at `/chat` — a role-reversed roleplay where you play the host and a live Groq/Llama model plays the guest. Pick a scenario (online lock, offline lock, or no lock with an unresponsive key holder) and the AI stays grounded in that property's real state: tell it you've remotely reset a lock that's actually offline and it will push back instead of thanking you for a fix that didn't happen. It's the second iteration of this project's live-AI mode — the first was a tool-calling agent that decided which actions to take, which turned out to be too unreliable (rate limits, malformed tool calls, contradictory repeat actions) to depend on mid-recording. See the journey doc for that story.
+There's also an AI chat prototype at `/chat`: a live Groq model plays a guest-support **agent** messaging you, the **property owner**, about a lockout — asking for your direction and reporting outcomes. Pick a scenario (online lock, offline lock, or no lock with an unresponsive key holder) and the AI stays grounded in that property's real state: tell it to try a remote reset on a lock that's actually offline and it reports back honestly that it didn't work, instead of a false all-clear.
 
-Built with FastAPI. The guided walkthrough is a deterministic decision tree (no LLM calls, so it can't fail mid-demo); the chat prototype uses Groq (Llama 3.1 8B) for plain grounded chat completions — no tool-calling involved, so the malformed-function-call failure mode is structurally impossible. Both share the same mock property/booking data standing in for a real property-management system, and the same `/api/log-incident` endpoint for writing real incident records.
+Built with FastAPI. The guided walkthrough is a deterministic decision tree (no LLM calls, so it can't fail mid-demo); the chat prototype uses Groq for plain grounded chat completions — no tool-calling involved. Both share the same mock property/booking data and the same `/api/log-incident` endpoint for writing real incident records.
 
 ## Setup
 
@@ -32,7 +32,7 @@ Start at `http://localhost:8000`. Click through at a natural pace:
 
 Every ending shows a Resolved / Escalated / Needs-follow-up badge and confirms the incident was logged — check `data/incidents.json` afterward to see the real entries.
 
-At `/chat`, pick a scenario, chat back and forth as the host, then click **Wrap up & log incident** whenever you're ready to conclude — it logs a real incident (resolution matched to that scenario's ground truth) and shows the same Resolved/Escalated badge as the walkthrough.
+At `/chat`, pick a scenario, chat back and forth as the property owner, then click **Wrap up & log incident** whenever you're ready to conclude — it logs a real incident (resolution matched to that scenario's ground truth) and shows the same Resolved/Escalated badge as the walkthrough.
 
 ## Project layout
 
