@@ -9,14 +9,27 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.types import Scope
 
 from . import persona
 from .actions import get_action
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+class NoCacheStaticFiles(StaticFiles):
+    """This app's static files change constantly during development/demoing --
+    browsers aggressively caching a stale JS/CSS file is worse than the perf
+    cost of always revalidating."""
+
+    async def get_response(self, path: str, scope: Scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
+
 app = FastAPI(title="Lockout Flow")
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+app.mount("/static", NoCacheStaticFiles(directory=BASE_DIR / "static"), name="static")
 
 PERSONA_SESSION: dict = {"property_id": None, "history": []}
 
@@ -36,14 +49,17 @@ class PersonaReplyRequest(BaseModel):
     message: str
 
 
+_NO_CACHE_HEADERS = {"Cache-Control": "no-cache, no-store, must-revalidate"}
+
+
 @app.get("/")
 def index():
-    return FileResponse(BASE_DIR / "static" / "index.html")
+    return FileResponse(BASE_DIR / "static" / "index.html", headers=_NO_CACHE_HEADERS)
 
 
 @app.get("/chat")
 def chat_page():
-    return FileResponse(BASE_DIR / "static" / "chat.html")
+    return FileResponse(BASE_DIR / "static" / "chat.html", headers=_NO_CACHE_HEADERS)
 
 
 @app.post("/api/log-incident")
